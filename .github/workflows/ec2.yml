@@ -1,0 +1,38 @@
+
+name: Provision EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        required: true
+      ami:
+        required: true
+      instance_type:
+        required: true
+      name:
+        required: true
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var="region=${{ inputs.region }}" \
+            -var="ami=${{ inputs.ami }}" \
+            -var="instance_type=${{ inputs.instance_type }}" \
+            -var="name=${{ inputs.name }}"
+        working-directory: terraform
