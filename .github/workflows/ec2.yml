@@ -1,33 +1,47 @@
-
 name: Provision EC2
 
 on:
   workflow_dispatch:
     inputs:
       region:
+        description: AWS region for the instance
         required: true
       ami:
+        description: AMI ID to launch
         required: true
       instance_type:
+        description: EC2 instance type
         required: true
       name:
+        description: Name tag for the instance
         required: true
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
-
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Step 2: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # Step 3: Configure AWS credentials from GitHub secrets
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+
+      # Step 4: Terraform Init
       - name: Terraform Init
         run: terraform init
-        working-directory: terraform
+        working-directory: .   # <-- root folder since your .tf files are here
 
+      # Step 5: Terraform Apply
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve \
@@ -35,4 +49,4 @@ jobs:
             -var="ami=${{ inputs.ami }}" \
             -var="instance_type=${{ inputs.instance_type }}" \
             -var="name=${{ inputs.name }}"
-        working-directory: terraform
+        working-directory: .
